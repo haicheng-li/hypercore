@@ -1,11 +1,8 @@
-void printk(char *fmt, char *s)
-{
-	return;
-}
+#include "uart.h"
 
 void kernel()
 {
-	char *msg = "hello kernel";
+	char *msg = "hello kernel\n";
 
-	printk("%s\n", msg);
+	printk(msg);
 }
