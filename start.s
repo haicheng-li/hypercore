@@ -9,6 +9,7 @@ _start:
 	mv a0, a2
 	mv a1, a2
 	jal init_stack
+	call init_vector
 	call kernel
 	addi a3, a3, %lo(init_stack)
 	lui a3, %hi(init_stack)
