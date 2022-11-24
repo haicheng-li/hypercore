@@ -1,1 +1,1 @@
-extern void kernel2();
+extern void kernel();

@@ -42,21 +42,19 @@ init_trap:
 
 kernel_init:
 	call setup_mmu
-
-kernel:
 	li a0, 0
 	csrw sie, a0
 	li a0, 0x0
 	csrw sstatus, a0
 	la a0, kernel_msg
 	call printk
-	la a0, user3
+	la a0, user_init
 	csrw sepc, a0
 	li a0, 0
 	sret
 
-user3:
-	la a0, user3_msg
+user_init:
+	la a0, user_msg
 	call printk
 	li a0, 0
 	ecall
@@ -65,7 +63,7 @@ user3:
 	.balign 4
 mtrap_handler:
 	#li t0, 0x1900
-	li t0, 0x900
+	li t0, 0x800
 	csrw mstatus, t0
 	la a0, mtrap_msg
 	call printk
@@ -86,7 +84,7 @@ strap_handler:
 trap_msg:
 	.string "init_trap\n"
 
-user3_msg:
+user_msg:
 	.string "i'm app\n"
 
 kernel_msg:
