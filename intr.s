@@ -41,7 +41,7 @@ init_trap:
 	ret
 
 kernel_init:
-	#call setup_mmu
+	call setup_mmu
 
 kernel:
 	li a0, 0
