@@ -20,12 +20,3 @@ void kernel()
 		"sret":: "r"(user)
 	);
 }
-
-void switch_mode()
-{
-	printk("enter m_mode\n");
-	asm volatile (
-		"csrw mepc, %0\n\t" \
-		"mret" :: "r"(kernel)
-	);
-}
