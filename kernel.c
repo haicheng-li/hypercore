@@ -1,20 +1,31 @@
 #include "uart.h"
 
-static void test_swi()
+void user()
 {
-	asm volatile (
-		"li a0, 0x1 \n\t" \
-		"li a1, 0x02000000 \n\t" \
-		"sw a0, 0(a1) \n\t"
-		::
-	);
+	char *msg = "hello world\n";
+
+	printk(msg);
+	asm volatile("ecall"::);
 }
 
-void kernel()
+void kernel2()
 {
 	char *msg = "hello kernel\n";
 
 	printk(msg);
-	printk("trigger swi\n");
-	test_swi();
+	asm volatile(
+		"li t0, 0x100\n\t" \
+		"csrw sstatus, t0\n\t" \
+		"csrw sepc, %0\n\t" \
+		"sret":: "r"(user)
+	);
+}
+
+void switch_mode()
+{
+	printk("enter m_mode\n");
+	asm volatile (
+		"csrw mepc, %0\n\t" \
+		"mret" :: "r"(kernel2)
+	);
 }

@@ -29,46 +29,58 @@ init_trap:
 
 	li t0, 0x1800
 	csrc mstatus, t0
-	li t0, 0x800
-	csrs mstatus, t0
+	li t0, 0x1800
+	#csrs mstatus, t0
+	csrw mstatus, t0
 	li t0, 0x100
+	#li t0, 0x103
 	csrw medeleg, t0
 
 	ld ra, 0(sp)
 	addi sp, sp, 8
 	ret
 
-	.globl switch_ctx
-switch_ctx:
-	la a0, switch_msg
-	call printk
-	la t0, kernel
-	csrw mepc, t0
-	mret
-
-
-mtrap_handler:
-	la a0, mtrap_msg
-	call printk
-	la t0, kernel
-	csrw mepc, t0
-	mret
+kernel_init:
+	#call setup_mmu
 
 kernel:
+	li a0, 0
+	csrw sie, a0
+	li a0, 0x0
+	csrw sstatus, a0
 	la a0, kernel_msg
 	call printk
-	la t0, user3
-	csrw sepc, t0
+	la a0, user3
+	csrw sepc, a0
+	li a0, 0
 	sret
-
-strap_handler:
-	la a0, strap_msg
-	call printk
-	ecall
 
 user3:
 	la a0, user3_msg
 	call printk
+	li a0, 0
+	ecall
+
+
+	.balign 4
+mtrap_handler:
+	#li t0, 0x1900
+	li t0, 0x900
+	csrw mstatus, t0
+	la a0, mtrap_msg
+	call printk
+	la t0, kernel
+	csrw mepc, t0
+	li a0, 0
+	mret
+
+	.balign 4
+strap_handler:
+	li a0, 0x000
+	csrw sstatus, a0
+	la a0, strap_msg
+	call printk
+	li a0, 0
 	ecall
 
 trap_msg:
@@ -88,6 +100,24 @@ mtrap_msg:
 
 strap_msg:
 	.string "strap handler\n"
+
+
+	.globl switch_ctx
+	.balign 4
+switch_ctx:
+	li t0, 0x0f
+	csrw pmpcfg0, t0
+	li t0, 0xffffffff
+	csrw pmpaddr0, t0
+	la a0, switch_msg
+	call printk
+
+	#li t0, 0x1800
+	li t0, 0x800
+	csrw mstatus, t0
+	la t0, kernel_init
+	csrw mepc, t0
+	mret
 
 
 	.balign 256

@@ -1,6 +1,8 @@
-.global _start
-.section ".init"
+	.text
+
+	.global _start
 _start:
+	#j start
 	li a3, 0
 	mv ra, a0
 	mv a0, a3
@@ -9,19 +11,20 @@ _start:
 	mv a0, a2
 	mv a1, a2
 	jal init_stack
-	call init_vector
-	call kernel
-	addi a3, a3, %lo(init_stack)
-	lui a3, %hi(init_stack)
-	addi a3, a3, %lo(init_stack)
+#	call init_vector
+	#call test_swi
+	call init_trap
+	#call switch_mode
+	#call setup_mmu
+	call switch_ctx
 	mv ra, a3
 	la ra, _start
 	ret	
 
 init_stack:
-	li sp, 0x80020000
+	li sp, 0x80300000
 	#csrw sscrach, sp
 	ret
 	
 message:
-	.string "hello world"
+	.string "hello world\n"
