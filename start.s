@@ -13,8 +13,11 @@ _start:
 	ret	
 
 secondary:
+	lw t0, g_cpus
+	addi t0, t0, 1
+	sw t0, g_cpus, t1
 	call init_trap
-	call switch_mode
+	call boot_idle
 
 init_stack:
 	li sp, 0x80300000
@@ -23,6 +26,6 @@ init_stack:
 	sub sp, sp, t0
 	#csrw sscrach, sp
 	ret
-	
+
 message:
 	.string "hello world\n"

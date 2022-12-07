@@ -48,10 +48,20 @@ kernel_init:
 	csrw sstatus, a0
 	la a0, kernel_msg
 	call printk
+	call smp_start_cpus
 	la a0, user_init
 	csrw sepc, a0
 	li a0, 0
 	sret
+
+idle_init:
+	call setup_mmu
+#	li a0, 0x2
+#	csrw sie, a0
+redo_idle:
+	call do_idle
+	j redo_idle
+
 
 user_init:
 	la a0, user_msg
@@ -62,6 +72,11 @@ user_init:
 
 	.balign 4
 mtrap_handler:
+	csrr a0, mcause
+	li a1, 0x8000000000000000
+	and a1, a0, a1
+	andi a0, a0, 0xff
+	bnez a1, mint_handler
 	#li t0, 0x1900
 	li t0, 0x800
 	csrw mstatus, t0
@@ -74,6 +89,15 @@ mtrap_handler:
 
 	.balign 4
 strap_handler:
+	li a0, 0
+	csrw sip, a0
+	csrr a0, scause
+	li a1, 0x8000000000000000
+	and a1, a0, a1
+	andi a0, a0, 0xff
+	beqz a1, out
+	call sint_handler
+out:
 	li a0, 0x000
 	csrw sstatus, a0
 	la a0, strap_msg
@@ -89,6 +113,9 @@ user_msg:
 
 kernel_msg:
 	.string "i'm kernel\n"
+
+idle_msg:
+	.string "i'm idle\n"
 
 switch_msg:
 	.string "switch context\n"
@@ -114,6 +141,23 @@ switch_ctx:
 	li t0, 0x800
 	csrw mstatus, t0
 	la t0, kernel_init
+	csrw mepc, t0
+	mret
+
+	.globl boot_idle
+	.balign 4
+boot_idle:
+	li t0, 0x0f
+	csrw pmpcfg0, t0
+	li t0, 0xffffffff
+	csrw pmpaddr0, t0
+	la a0, idle_msg
+	call printk
+	li a0, 0x0a
+	csrw mie, a0
+	li t0, 0x8aa
+	csrw mstatus, t0
+	la t0, idle_init
 	csrw mepc, t0
 	mret
 
