@@ -44,10 +44,12 @@ kernel_init:
 	call setup_mmu
 	li a0, 0
 	csrw sie, a0
-	li a0, 0x0
+	li a0, 0x100
 	csrw sstatus, a0
+	call init_vmm
 	la a0, kernel_msg
 	call printk
+	call switch_vcpu
 	call smp_start_cpus
 	la a0, user_init
 	csrw sepc, a0
@@ -137,9 +139,12 @@ switch_ctx:
 	la a0, switch_msg
 	call printk
 
-	#li t0, 0x1800
+	li t0, 0x1800
+	csrc mstatus, t0
 	li t0, 0x800
-	csrw mstatus, t0
+	csrs mstatus, t0
+	csrr t0, hstatus
+	csrs hstatus, t0
 	la t0, kernel_init
 	csrw mepc, t0
 	mret

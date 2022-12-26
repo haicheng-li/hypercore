@@ -8,6 +8,7 @@ _start:
 #	call init_vector
 	#call test_swi
 	call init_trap
+	#call init_vmode
 	call switch_ctx
 	la ra, _start
 	ret	
