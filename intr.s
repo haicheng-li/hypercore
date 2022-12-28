@@ -40,6 +40,35 @@ init_trap:
 	addi sp, sp, 8
 	ret
 
+	.globl vkernel
+vkernel:
+	call setup_mmu
+	li a0, 0
+	csrw sie, a0
+	li a0, 0x100
+	csrw sstatus, a0
+	la a0, kernel_msg
+	call printk
+	#call smp_start_cpus
+	la a0, user_init
+	csrw sepc, a0
+	li a0, 0
+	sret
+
+	.globl vkernel2
+vkernel2:
+	call setup_mmu
+	li a0, 0
+	csrw sie, a0
+	li a0, 0x100
+	csrw sstatus, a0
+	la a0, kernel_msg
+	call printk
+	la a0, user_init
+	csrw sepc, a0
+	li a0, 0
+	sret
+
 kernel_init:
 	call setup_mmu
 	li a0, 0
@@ -62,6 +91,8 @@ idle_init:
 #	csrw sie, a0
 redo_idle:
 	call do_idle
+	call init_vmm
+	call switch_vcpu2
 	j redo_idle
 
 
@@ -143,8 +174,6 @@ switch_ctx:
 	csrc mstatus, t0
 	li t0, 0x800
 	csrs mstatus, t0
-	csrr t0, hstatus
-	csrs hstatus, t0
 	la t0, kernel_init
 	csrw mepc, t0
 	mret
