@@ -12,12 +12,17 @@
 
 	.globl init_vmm
 init_vmm:
-#	csrr t1, hedeleg
-#	li t0, 0x100
-#	csrs hedeleg, t0
+	csrr t1, 0x600
+	li t0, 0x200000080
+	csrs 0x600, t0
+	csrr t1, 0x600
 	csrr t1, 0x602
 	li t0, 0x100
 	csrs 0x602, t0
+	csrr t1, 0x602
+	ret
+
+init_vmm_buggy:
 	csrr t1, hstatus
 	li t0, 0x180
 	li t0, 0x200000180
@@ -30,6 +35,13 @@ init_vmm:
 	#csrw hstatus, t0
 	#csrw 0x600, t0
 	csrr t1, hstatus
+
+	csrr t1, 0x602
+	csrs 0x602, t0
+	csrr t1, hedeleg
+	li t0, 0x100
+	csrs hedeleg, t0
+	li t0, 0x100
 	ret
 
 
