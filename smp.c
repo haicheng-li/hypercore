@@ -5,7 +5,6 @@ void do_idle()
 	printk("enter s_mode idle, wait for ipi\n");
 	asm volatile ("wfi"::);
 	printk("exit s_mode idle by ipi\n");
-	while(1);
 }
 
 static void do_swi(int cpu)
