@@ -32,7 +32,7 @@ init_trap:
 	li t0, 0x1800
 	#csrs mstatus, t0
 	csrw mstatus, t0
-	li t0, 0x100
+	li t0, 0x500
 	#li t0, 0x103
 	csrw medeleg, t0
 
@@ -40,17 +40,29 @@ init_trap:
 	addi sp, sp, 8
 	ret
 
+
 	.globl vkernel
 vkernel:
 	call setup_mmu
 	li a0, 0
 	csrw sie, a0
-	li a0, 0x100
+	li a0, 0x00
 	csrw sstatus, a0
-	la a0, kernel_msg
+	la a0, vkernel_msg
 	call printk
+
+	#used to check hs or vs mode
+	#csrr t1, 0x600
+
 	#call smp_start_cpus
-	la a0, user_init
+
+
+	csrr t1, stvec
+	la t0, vstrap_handler
+	csrw stvec, t0
+
+	csrr t1, sstatus
+	la a0, guest
 	csrw sepc, a0
 	li a0, 0
 	sret
@@ -62,7 +74,7 @@ vkernel2:
 	csrw sie, a0
 	li a0, 0x100
 	csrw sstatus, a0
-	la a0, kernel_msg
+	la a0, vkernel2_msg
 	call printk
 	la a0, user_init
 	csrw sepc, a0
@@ -124,6 +136,7 @@ mtrap_handler:
 strap_handler:
 	li a0, 0
 	csrw sip, a0
+	csrr t1, 0x600
 	csrr a0, scause
 	li a1, 0x8000000000000000
 	and a1, a0, a1
@@ -138,6 +151,30 @@ out:
 	li a0, 0
 	ecall
 
+	.balign 4
+vstrap_handler:
+	li a0, 0
+	csrw sip, a0
+
+	#check if it's in VS mode
+	#csrr t1, 0x600
+
+	csrr a0, scause
+	li a1, 0x8000000000000000
+	and a1, a0, a1
+	andi a0, a0, 0xff
+	beqz a1, vout
+	call sint_handler
+vout:
+	li a0, 0x000
+	csrw sstatus, a0
+	la a0, vstrap_msg
+	call printk
+	li a0, 0
+	ecall
+
+
+	.balign 4
 trap_msg:
 	.string "init_trap\n"
 
@@ -146,6 +183,12 @@ user_msg:
 
 kernel_msg:
 	.string "i'm kernel\n"
+
+vkernel_msg:
+	.string "i'm vkernel\n"
+
+vkernel2_msg:
+	.string "i'm vkernel2\n"
 
 idle_msg:
 	.string "i'm idle\n"
@@ -158,6 +201,9 @@ mtrap_msg:
 
 strap_msg:
 	.string "strap handler\n"
+
+vstrap_msg:
+	.string "vstrap handler\n"
 
 
 	.globl switch_ctx
