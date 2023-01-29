@@ -32,7 +32,7 @@ init_trap:
 	li t0, 0x1800
 	#csrs mstatus, t0
 	csrw mstatus, t0
-	li t0, 0x500
+	li t0, 0xf500
 	#li t0, 0x103
 	csrw medeleg, t0
 
@@ -63,6 +63,8 @@ vkernel:
 
 	csrr t1, sstatus
 	la a0, guest
+	li t0, 0x40080000
+	sub a0, a0, t0
 	csrw sepc, a0
 	li a0, 0
 	sret
@@ -76,7 +78,7 @@ vkernel2:
 	csrw sstatus, a0
 	la a0, vkernel2_msg
 	call printk
-	la a0, user_init
+	la a0, guest
 	csrw sepc, a0
 	li a0, 0
 	sret
@@ -85,14 +87,18 @@ kernel_init:
 	call setup_mmu
 	li a0, 0
 	csrw sie, a0
-	li a0, 0x100
+	li a0, 0xC0000
 	csrw sstatus, a0
-	call init_vmm
+#	call init_vmm
 	la a0, kernel_msg
 	call printk
-	call switch_vcpu
-	call smp_start_cpus
-	la a0, user_init
+#	call switch_vcpu
+#	call smp_start_cpus
+#	la a0, user
+	la a0, app
+#	li t0, 0x40080000
+	li t0, 0x40000000
+	sub a0, a0, t0
 	csrw sepc, a0
 	li a0, 0
 	sret
@@ -106,13 +112,6 @@ redo_idle:
 	call init_vmm
 	call switch_vcpu2
 	j redo_idle
-
-
-user_init:
-	la a0, user_msg
-	call printk
-	li a0, 0
-	ecall
 
 
 	.balign 4
@@ -177,9 +176,6 @@ vout:
 	.balign 4
 trap_msg:
 	.string "init_trap\n"
-
-user_msg:
-	.string "i'm app\n"
 
 kernel_msg:
 	.string "i'm kernel\n"

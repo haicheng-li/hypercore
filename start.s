@@ -21,7 +21,7 @@ secondary:
 	call boot_idle
 
 init_stack:
-	li sp, 0x80300000
+	li sp, 0x80070000
 	li t0, 0x10000
 	mul t0, a0, t0
 	sub sp, sp, t0
